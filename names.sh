@@ -1,0 +1,2 @@
+MYHOSTNAME=rpyzero
+MYUSERNAME=oraora
