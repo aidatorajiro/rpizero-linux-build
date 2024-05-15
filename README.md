@@ -15,3 +15,8 @@ Patch reference: <https://github.com/pikvm/packages/blob/master/packages/linux-r
 1. `sh packsend.sh`
 
 Adjust `names.sh` to configure hostname and username for ssh connection, or customize kernel name.
+
+## known issues
+
+although without the dwc2 patch `/root/remove.sh` works, with dwc2 patch it does not work. anyway its safer to restart the system when you change usb config.
+
