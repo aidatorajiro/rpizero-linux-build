@@ -26,6 +26,7 @@ USBN="usb0"
 CONF=1
 
 mkdir -p configs/c.${CONF}
+echo 0xA0 > configs/c.${CONF}/bmAttributes
 echo 250 > configs/c.${CONF}/MaxPower
 mkdir -p configs/c.${CONF}/strings/0x409
 echo "ECM+HID" > configs/c.${CONF}/strings/0x409/configuration
