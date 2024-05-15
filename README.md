@@ -11,3 +11,5 @@ Patch reference: <https://github.com/pikvm/packages/blob/master/packages/linux-r
 1. (inside docker) `exit`
 1. `sh pack.sh`
 1. `sh packsend.sh`
+
+Adjust `names.sh` to configure hostname, username etc.
