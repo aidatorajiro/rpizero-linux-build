@@ -1,6 +1,8 @@
-# how to build
+# Raspberry pi zero kernel build tool
 
-this is a script to 
+This is a script to build a custom raspberry pi kernel, including a kernel patch to fix dwc2 wakeup issue.
+
+Patch reference: <https://github.com/pikvm/packages/blob/master/packages/linux-rpi-pikvm/1003-remote-wakeup.patch> <https://github.com/raspberrypi/linux/issues/3977> <http://www.dt8.jp/cgi-bin/adiary/adiary.cgi/0583>
 
 1. `sh download.sh`
 1. `sh docker.sh`
