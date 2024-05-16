@@ -3,3 +3,4 @@
 /install
 /config-pyzero
 /install.tar.xz
+__pycache__
