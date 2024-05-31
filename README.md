@@ -10,6 +10,7 @@ Patch reference: <https://github.com/pikvm/packages/blob/master/packages/linux-r
 1. `sh docker.sh`
 1. (inside docker) `cd /rpizero-linux-build`
 1. (inside docker) `sh build.sh`
+1. (if necessary change permission to user) `sh perm.sh`
 1. (inside docker) `exit`
 1. `sh pack.sh`
 1. `sh packsend.sh`
