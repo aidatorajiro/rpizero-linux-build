@@ -5,3 +5,4 @@
 /install.tar.xz
 __pycache__
 venv
+.DS_Store
