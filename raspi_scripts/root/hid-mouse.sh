@@ -40,7 +40,7 @@ echo "HID" > configs/c.${CONF}/strings/0x409/configuration
 mkdir -p functions/hid.${USBN}
 echo 1 > functions/hid.${USBN}/protocol
 echo 1 > functions/hid.${USBN}/subclass
-echo 7 > functions/hid.${USBN}/report_length
+echo 8 > functions/hid.${USBN}/report_length
 echo -ne \\x05\\x01\\x09\\x02\\xA1\\x01\\x09\\x01\\xA1\\x00\\x05\\x09\\x19\\x01\\x29\\x05\\x15\\x00\\x25\\x01\\x95\\x05\\x75\\x01\\x81\\x02\\x95\\x01\\x75\\x03\\x81\\x03\\x05\\x01\\x09\\x30\\x09\\x31\\x09\\x38\\x16\\x01\\x80\\x26\\xFF\\x7F\\x75\\x10\\x95\\x03\\x81\\x06\\xC0\\xC0 > functions/hid.${USBN}/report_desc
 echo 1 > functions/hid.${USBN}/wakeup_on_write
 ln -s functions/hid.${USBN} configs/c.${CONF}/
