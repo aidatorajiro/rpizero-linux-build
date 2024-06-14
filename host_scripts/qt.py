@@ -1,8 +1,11 @@
 import sys
+import struct
 
 from PyQt5.QtCore import QSize, Qt, QEvent
 from PyQt5.QtGui import QMouseEvent
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsView, QGraphicsScene
+from keymap import inv_qtkeys, unshift_table, create_report
+
 
 class StateManager():
     def __init__(self):
@@ -22,11 +25,15 @@ class StateManager():
             self.pos_callback((self.current_pos_old, self.current_pos))
 
     def add_key(self, k):
+        if k in unshift_table:
+            k = unshift_table[k]
         if not k in self.pressed_keys:
             self.pressed_keys.add(k)
             self.key_callback(self.pressed_keys)
     
     def remove_key(self, k):
+        if k in unshift_table:
+            k = unshift_table[k]
         if k in self.pressed_keys:
             self.pressed_keys.remove(k)
             self.key_callback(self.pressed_keys)
@@ -54,20 +61,25 @@ sm = StateManager()
 
 def pos_func(x):
     (oldpos, newpos) = x
-    print(x)
-    pass
+    if oldpos != None and newpos != None:
+        dx, dy = newpos[0] - oldpos[0], newpos[1] - oldpos[1]
+        payload = struct.pack('hh', dx, dy)
+        print('pos', payload)
 
 sm.set_pos_callback(pos_func)
 
 def key_func(keys):
     print(keys)
-    pass
+    payload = create_report(list(keys))
+    # print([inv_qtkeys[k] for k in list(keys)])
+    print('key', keys, payload)
 
 sm.set_key_callback(key_func)
 
 def btn_func(btns):
-    print(btns)
-    pass
+    intersection = btns & {1, 2, 4} # 1: left, 2: right, 4:middle
+    payload = struct.pack('B', sum(intersection))
+    print('btn', payload)
 
 sm.set_button_callback(btn_func)
 
