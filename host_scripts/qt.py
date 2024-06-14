@@ -1,11 +1,28 @@
 import sys
 import struct
+import subprocess
 
 from PyQt5.QtCore import QSize, Qt, QEvent
 from PyQt5.QtGui import QMouseEvent
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsView, QGraphicsScene
-from keymap import inv_qtkeys, unshift_table, create_report
+from keymap import inv_qtkeys, unshift_table, create_key_report
 
+from config import HOST_AND_USER
+
+import atexit
+import time
+
+ssh_process = subprocess.Popen(["ssh", HOST_AND_USER, "sudo", "python", "allsync.py"], stdin=subprocess.PIPE, stdout=None, stderr=None)
+
+def handler_exit():
+    ssh_process.terminate()
+    ssh_process.wait()
+
+atexit.register(handler_exit)
+
+def send_payload(payload):
+    ssh_process.stdin.write(payload)
+    ssh_process.stdin.flush()
 
 class StateManager():
     def __init__(self):
@@ -22,7 +39,7 @@ class StateManager():
         if self.current_pos != p:
             self.current_pos_old = self.current_pos
             self.current_pos = p
-            self.pos_callback((self.current_pos_old, self.current_pos))
+            self.pos_callback((self.current_pos_old, self.current_pos, self.pressed_buttons))
 
     def add_key(self, k):
         if k in unshift_table:
@@ -41,47 +58,46 @@ class StateManager():
     def add_button(self, b):
         if not b in self.pressed_buttons:
             self.pressed_buttons.add(b)
-            self.button_callback(self.pressed_buttons)
+            self.button_callback((self.current_pos, self.current_pos, self.pressed_buttons))
     
     def remove_button(self, b):
         if b in self.pressed_buttons:
             self.pressed_buttons.remove(b)
-            self.button_callback(self.pressed_buttons)
-    
-    def set_key_callback(self, cb):
-        self.key_callback = cb
+            self.button_callback((self.current_pos, self.current_pos, self.pressed_buttons))
 
     def set_pos_callback(self, cb):
         self.pos_callback = cb
+
+    def set_key_callback(self, cb):
+        self.key_callback = cb
 
     def set_button_callback(self, cb):
         self.button_callback = cb
 
 sm = StateManager()
 
-def pos_func(x):
-    (oldpos, newpos) = x
+def mouse_func(x):
+    (oldpos, newpos, btns) = x
+
     if oldpos != None and newpos != None:
         dx, dy = newpos[0] - oldpos[0], newpos[1] - oldpos[1]
-        payload = struct.pack('hh', dx, dy)
-        print('pos', payload)
-
-sm.set_pos_callback(pos_func)
+        intersection = btns & {1, 2, 4} # 1: left, 2: right, 4:middle
+        payload = struct.pack('<BhhBB', sum(intersection), dx, dy, 0, 0)
+        print('pos+btn', payload)
+        send_payload(b'\x01' + payload)
 
 def key_func(keys):
     print(keys)
-    payload = create_report(list(keys))
+    payload = create_key_report(list(keys))
     # print([inv_qtkeys[k] for k in list(keys)])
     print('key', keys, payload)
+    send_payload(b'\x02' + payload)
+
+sm.set_pos_callback(mouse_func)
 
 sm.set_key_callback(key_func)
 
-def btn_func(btns):
-    intersection = btns & {1, 2, 4} # 1: left, 2: right, 4:middle
-    payload = struct.pack('B', sum(intersection))
-    print('btn', payload)
-
-sm.set_button_callback(btn_func)
+sm.set_button_callback(mouse_func)
 
 # Subclass QMainWindow to customize your application's main window
 class MainWindow(QMainWindow):
@@ -102,17 +118,17 @@ class MainWindow(QMainWindow):
         if event.type() == QEvent.MouseMove:
             sm.change_pos((event.pos().x(), event.pos().y()))
             return True
-        elif event.type() == QEvent.MouseButtonPress:
-            sm.add_button(event.button())
-            return True
-        elif event.type() == QEvent.MouseButtonRelease:
-            sm.remove_button(event.button())
-            return True
         elif event.type() == QEvent.KeyPress:
             sm.add_key(event.key())
             return True
         elif event.type() == QEvent.KeyRelease:
             sm.remove_key(event.key())
+            return True
+        elif event.type() == QEvent.MouseButtonPress:
+            sm.add_button(event.button())
+            return True
+        elif event.type() == QEvent.MouseButtonRelease:
+            sm.remove_button(event.button())
             return True
         return QMainWindow.eventFilter(self, source, event)
 

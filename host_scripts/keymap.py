@@ -638,7 +638,7 @@ def modifier_bit(keycode):
     modifier key; otherwise return None."""
     return 1 << (keycode - 0xE0) if keymap[K.Key_Control] <= keycode else None
 
-def create_report(list_of_keys, n=6):
+def create_key_report(list_of_keys, n=6):
     list_of_keys = list_of_keys[:n]
     mod = 0
     rep = [0] * n
@@ -651,4 +651,4 @@ def create_report(list_of_keys, n=6):
         else:
             rep[i] = k
             i += 1
-    return struct.pack('B' * (2 + n), mod, 0, *rep)
+    return struct.pack('<' + 'B' * (2 + n), mod, 0, *rep)
