@@ -31,7 +31,7 @@ with open('/dev/hidg0', 'wb') as hidg0:
                     res = await reader.read(7)
                     if not res:
                         break
-                    writer_hidg1.write(b'\0' + res + b'\0\0')
+                    writer_hidg1.write(res)
                 if res == b'\x02':
                     res = await reader.read(8)
                     if not res:
