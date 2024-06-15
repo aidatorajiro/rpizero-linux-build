@@ -14,12 +14,12 @@ Patch reference: <https://github.com/pikvm/packages/blob/master/packages/linux-r
 1. (inside docker) `sh build.sh`
 1. (inside docker) `exit`
 1. Create a file named `names.sh` and set the contents as follows.
-  ```
-  MYHOSTNAME=<hostname of rpi zero without .local>
-  MYUSERNAME=<username of rpi zero>
-  MY_KERNEL_SUFFIX=wakeup
-  MY_KERNEL_NAME=kernel-$MY_KERNEL_SUFFIX
-  ```
+   ```
+   MYHOSTNAME=<hostname of rpi zero without .local>
+   MYUSERNAME=<username of rpi zero>
+   MY_KERNEL_SUFFIX=wakeup
+   MY_KERNEL_NAME=kernel-$MY_KERNEL_SUFFIX
+   ```
 1. `sh pack.sh`
 1. `sh packsend.sh`
 1. ssh into the rpizero and reboot
