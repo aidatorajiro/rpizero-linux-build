@@ -22,6 +22,12 @@ Patch reference: <https://github.com/pikvm/packages/blob/master/packages/linux-r
    ```
 1. `sh pack.sh`
 1. `sh packsend.sh`
+1. ssh into the rpizero and edit `/boot/firmware/config.txt`. (Alternatively, you can edit the SD card. The file is at `/config.txt` in the EFI partition). Add following lines to the boot configuration.
+   ```
+   [all]
+   dtoverlay=dwc2
+   kernel=kernel-wakeup.img
+   ```
 1. ssh into the rpizero and reboot
 
 Adjust `names.sh` to configure hostname and username for ssh connection, or customize kernel name.
