@@ -22,7 +22,7 @@ Patch reference: <https://github.com/pikvm/packages/blob/master/packages/linux-r
    ```
 1. `sh pack.sh`
 1. `sh packsend.sh`
-1. ssh into the rpizero and edit `/boot/firmware/config.txt`. (Alternatively, you can edit the SD card. The file is at `/config.txt` in the EFI partition). Add following lines to the boot configuration.
+1. ssh into the rpizero and edit `/boot/firmware/config.txt`. Add following lines to the boot configuration. Alternatively, you can edit the SD. The file is at `/config.txt` in the EFI partition. If anything wrong happens, please edit SD directly and delete these lines to reverse changes made.
    ```
    [all]
    dtoverlay=dwc2
