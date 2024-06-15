@@ -30,7 +30,6 @@ Patch reference: <https://github.com/pikvm/packages/blob/master/packages/linux-r
    ```
 1. ssh into the rpizero and reboot
 
-Adjust `names.sh` to configure hostname and username for ssh connection, or customize kernel name.
 
 ## known issues
 
