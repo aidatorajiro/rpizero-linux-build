@@ -6,15 +6,23 @@ Also, the directory `raspi_scripts` contains utilities to setup HID keyboard, RN
 
 Patch reference: <https://github.com/pikvm/packages/blob/master/packages/linux-rpi-pikvm/1003-remote-wakeup.patch> <https://github.com/raspberrypi/linux/issues/3977> <http://www.dt8.jp/cgi-bin/adiary/adiary.cgi/0583>
 
-1. (if you are using selinux, run this script to allow write access from docker) `sh selinux.sh`
+1. (if you are using selinux, run this script to allow write access from docker) `sudo sh selinux.sh`
 1. `sh download.sh`
 1. `sh docker.sh`
 1. (inside docker) `cd /rpizero-linux-build`
 1. (inside docker) `sh clean.sh`
 1. (inside docker) `sh build.sh`
 1. (inside docker) `exit`
+1. Create a file named `names.sh` and set the contents as follows.
+  ```
+  MYHOSTNAME=<hostname of rpi zero without .local>
+  MYUSERNAME=<username of rpi zero>
+  MY_KERNEL_SUFFIX=wakeup
+  MY_KERNEL_NAME=kernel-$MY_KERNEL_SUFFIX
+  ```
 1. `sh pack.sh`
 1. `sh packsend.sh`
+1. ssh into the rpizero and reboot
 
 Adjust `names.sh` to configure hostname and username for ssh connection, or customize kernel name.
 
