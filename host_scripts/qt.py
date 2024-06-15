@@ -16,6 +16,9 @@ import time
 ssh_process = subprocess.Popen(["ssh", HOST_AND_USER, "sudo", "python", "allsync.py"], stdin=subprocess.PIPE, stdout=None, stderr=None)
 
 def handler_exit():
+    print('sending reset payload...')
+    reset_payload()
+    time.sleep(1)
     ssh_process.terminate()
     ssh_process.wait()
 
@@ -96,6 +99,10 @@ def key_func(keys):
     # print([inv_qtkeys[k] for k in list(keys)])
     print('key', keys, payload)
     send_payload(b'\x02' + payload)
+
+def reset_payload():
+    send_payload(b'\x01' + b'\0' * 7)
+    send_payload(b'\x02' + b'\0' * 8)
 
 sm.set_pos_callback(mouse_func)
 
