@@ -134,10 +134,10 @@ class MainWindow(QMainWindow):
         if event.type() == QEvent.MouseMove:
             sm.change_pos((event.pos().x(), event.pos().y()))
             return True
-        elif event.type() == QEvent.KeyPress:
+        elif event.type() == QEvent.KeyPress and not event.isAutoRepeat():
             sm.add_key(event.key())
             return True
-        elif event.type() == QEvent.KeyRelease:
+        elif event.type() == QEvent.KeyRelease and not event.isAutoRepeat():
             sm.remove_key(event.key())
             return True
         elif event.type() == QEvent.MouseButtonPress:
