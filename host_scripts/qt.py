@@ -19,17 +19,12 @@ import time
 ssh_process = subprocess.Popen(["ssh", HOST_AND_USER, "sudo", "python", "allsync.py"], stdin=subprocess.PIPE, stdout=None, stderr=None)
 
 def handler_exit():
-    print('sending reset payload...')
     reset_payload()
     time.sleep(1)
     ssh_process.terminate()
     ssh_process.wait()
 
 atexit.register(handler_exit)
-
-def send_payload(payload):
-    ssh_process.stdin.write(payload)
-    ssh_process.stdin.flush()
 
 class StateManager():
     def __init__(self):
@@ -42,6 +37,12 @@ class StateManager():
         self.key_callback: Callable[[set[int]], None] | None = None
         self.pos_callback: Callable[[tuple[tuple[int, int], tuple[int, int], set[int]]], None] | None = None
         self.button_callback = None
+    
+    def reset_states(self):
+        print('reset states...')
+        self.pressed_buttons = set()
+        self.pressed_keys = set()
+        self.center = None
     
     def set_center(self, p):
         self.center = p
@@ -91,6 +92,15 @@ class StateManager():
 
 sm = StateManager()
 
+def send_payload(payload):
+    ssh_process.stdin.write(payload) # type: ignore
+    ssh_process.stdin.flush() # type: ignore
+
+def reset_payload():
+    print('sending reset payload...')
+    send_payload(b'\x01' + b'\0' * 7)
+    send_payload(b'\x02' + b'\0' * 8)
+
 def mouse_func(x):
     (oldpos, newpos, btns) = x
 
@@ -107,10 +117,6 @@ def key_func(keys):
     # print([inv_qtkeys[k] for k in list(keys)])
     print('key', keys, payload)
     send_payload(b'\x02' + payload)
-
-def reset_payload():
-    send_payload(b'\x01' + b'\0' * 7)
-    send_payload(b'\x02' + b'\0' * 8)
 
 sm.set_pos_callback(mouse_func)
 
@@ -143,8 +149,17 @@ class MainWindow(QMainWindow):
         self.setFixedSize(QSize(self.mainwidth,self.mainwidth))
 
         self.center_mouse_time = datetime.datetime.now()
+        self.focus_out_reset_done = False
 
     def frame_process(self):
+        if self.isActiveWindow():
+            self.focus_out_reset_done = False
+        elif self.focus_out_reset_done == False:
+            self.grabEnabled = False
+            reset_payload()
+            sm.reset_states()
+            self.focus_out_reset_done = True
+        
         if sm.pressed_keys == {Key.Key_G, Key.Key_Alt}:
             self.grabEnabled_cnt += 1
             if self.grabEnabled_cnt == 1:
@@ -157,6 +172,7 @@ class MainWindow(QMainWindow):
 
         if sm.pressed_keys == {Key.Key_R, Key.Key_Alt}:
             reset_payload()
+            sm.reset_states()
 
         if sm.pressed_keys == {Key.Key_Q, Key.Key_Alt}:
             app.exit()
@@ -168,20 +184,20 @@ class MainWindow(QMainWindow):
         self.center_mouse_time = new_time
         sm.set_center((self.mainwidth//2,self.mainwidth//2))
 
-    def eventFilter(self, source, event):
-        if event.type() == QEvent.MouseMove:
+    def eventFilter(self, source, event): # type: ignore
+        if event.type() == QEvent.MouseMove: # type: ignore
             sm.change_pos((event.pos().x(), event.pos().y()))
             return True
-        elif event.type() == QEvent.KeyPress and not event.isAutoRepeat():
+        elif event.type() == QEvent.KeyPress and not event.isAutoRepeat(): # type: ignore
             sm.add_key(event.key())
             return True
-        elif event.type() == QEvent.KeyRelease and not event.isAutoRepeat():
+        elif event.type() == QEvent.KeyRelease and not event.isAutoRepeat(): # type: ignore
             sm.remove_key(event.key())
             return True
-        elif event.type() == QEvent.MouseButtonPress:
+        elif event.type() == QEvent.MouseButtonPress: # type: ignore
             sm.add_button(event.button())
             return True
-        elif event.type() == QEvent.MouseButtonRelease:
+        elif event.type() == QEvent.MouseButtonRelease: # type: ignore
             sm.remove_button(event.button())
             return True
         return QMainWindow.eventFilter(self, source, event)
