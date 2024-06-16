@@ -1,6 +1,6 @@
 # Raspberry pi zero kernel build tool & other scripts
 
-This is a script to build a custom raspberry pi kernel, including a kernel patch to fix dwc2 wakeup issue.
+This is a script to build a custom raspberry pi kernel, including a kernel patch to fix dwc2 wakeup issue. I haven't tested, but probably works for Pi4 or Pi5.
 
 Also, the directory `raspi_scripts` contains utilities to setup HID keyboard, RNDIS or ECM. Using a python library by @Danny-Dasilva (<https://github.com/Danny-Dasilva/Py_Keyboard>)
 
@@ -21,8 +21,8 @@ Patch reference: <https://github.com/pikvm/packages/blob/master/packages/linux-r
    MY_KERNEL_NAME=kernel-$MY_KERNEL_SUFFIX
    ```
 1. `sh pack.sh`
-1. `sh packsend.sh`
-1. ssh into the rpizero and edit `/boot/firmware/config.txt`. Add following lines to the boot configuration. Alternatively, you can edit the SD. The file is at `/config.txt` in the EFI partition. If anything wrong happens, please edit SD directly and delete these lines to reverse changes made.
+1. `sh packsend.sh` make sure you have SSH access to the rpi zero and it is connected to the local network.  Alternatively, you can just copy generated files at `install/` to the SD card. First, copy `boot/firmware` into `/` of the EFI partition (usually the first partition). Second, copy `lib/modules` into `lib/modules` of the root partition (usually the second partition). Beware of file ownership. All files should be owned by `root`.
+1. ssh into the rpizero and edit `/boot/firmware/config.txt`. Add following lines to the boot configuration. Alternatively, you can edit the SD. The file is at `/config.txt` in the EFI partition. If anything wrong happens (eg. the system doesn't start), please edit SD directly and delete these lines to revert all changes made to the system.
    ```
    [all]
    dtoverlay=dwc2
