@@ -2,11 +2,14 @@ import sys
 import struct
 import subprocess
 import datetime
+from typing import Callable
 
-from PyQt5.QtCore import QSize, Qt, QEvent, QPoint
+from PyQt5.QtCore import QSize, QTimer, Qt, QEvent, QPoint
 from PyQt5.QtGui import QMouseEvent, QCursor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsView, QGraphicsScene
 from keymap import inv_qtkeys, unshift_table, create_key_report
+
+Key = Qt.Key
 
 from config import HOST_AND_USER
 
@@ -30,47 +33,52 @@ def send_payload(payload):
 
 class StateManager():
     def __init__(self):
-        self.pressed_keys = set()
-        self.pressed_buttons = set()
+        self.pressed_keys: set[int] = set()
+        self.pressed_buttons: set[int] = set()
         # self.current_pos = None
         # self.current_pos_old = None
-        self.center = None
+        self.center: tuple[int, int] | None = None
 
-        self.key_callback = None
-        self.pos_callback = None
+        self.key_callback: Callable[[set[int]], None] | None = None
+        self.pos_callback: Callable[[tuple[tuple[int, int], tuple[int, int], set[int]]], None] | None = None
         self.button_callback = None
     
     def set_center(self, p):
         self.center = p
     
-    def change_pos(self, p):
-        if self.center != p:
+    def change_pos(self, p: tuple[int, int]):
+        if self.center != p and self.center is not None:
             # self.current_pos = p
-            self.pos_callback((self.center, p, self.pressed_buttons))
+            if self.pos_callback is not None:
+                self.pos_callback((self.center, p, self.pressed_buttons))
 
     def add_key(self, k):
         if k in unshift_table:
             k = unshift_table[k]
         if not k in self.pressed_keys:
             self.pressed_keys.add(k)
-            self.key_callback(self.pressed_keys)
+            if self.key_callback is not None:
+                self.key_callback(self.pressed_keys)
     
     def remove_key(self, k):
         if k in unshift_table:
             k = unshift_table[k]
         if k in self.pressed_keys:
             self.pressed_keys.remove(k)
-            self.key_callback(self.pressed_keys)
+            if self.key_callback is not None:
+                self.key_callback(self.pressed_keys)
 
     def add_button(self, b):
         if not b in self.pressed_buttons and self.center is not None:
             self.pressed_buttons.add(b)
-            self.button_callback((self.center, self.center, self.pressed_buttons))
+            if self.button_callback is not None:
+                self.button_callback((self.center, self.center, self.pressed_buttons))
     
     def remove_button(self, b):
         if b in self.pressed_buttons and self.center is not None:
             self.pressed_buttons.remove(b)
-            self.button_callback((self.center, self.center, self.pressed_buttons))
+            if self.button_callback is not None:
+                self.button_callback((self.center, self.center, self.pressed_buttons))
 
     def set_pos_callback(self, cb):
         self.pos_callback = cb
@@ -115,29 +123,52 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.width = 500
+        self.grabEnabled = True
+        self.grabEnabled_cnt = 0
+        self.mainwidth = 150
+
+        self.frametimer = QTimer(self)
+        self.frametimer.setInterval(10)
+        self.frametimer.timeout.connect(self.frame_process)
+        self.frametimer.start()
 
         self.setWindowTitle("My App")
         self.view = QGraphicsView()
-        self.view.setFixedSize(QSize(self.width,self.width))
+        self.view.setFixedSize(QSize(self.mainwidth,self.mainwidth))
         self.scene = QGraphicsScene()
         self.view.setScene(self.scene)
 
         self.setCentralWidget(self.view)
         # self.setMouseTracking(True)
-        self.setFixedSize(QSize(self.width,self.width))
+        self.setFixedSize(QSize(self.mainwidth,self.mainwidth))
 
         self.center_mouse_time = datetime.datetime.now()
+
+    def frame_process(self):
+        if sm.pressed_keys == {Key.Key_G, Key.Key_Alt}:
+            self.grabEnabled_cnt += 1
+            if self.grabEnabled_cnt == 1:
+                self.grabEnabled = not self.grabEnabled
+        else:
+            self.grabEnabled_cnt = 0
+        
+        if self.grabEnabled == True:
+            self.center_mouse()
+
+        if sm.pressed_keys == {Key.Key_R, Key.Key_Alt}:
+            reset_payload()
+
+        if sm.pressed_keys == {Key.Key_Q, Key.Key_Alt}:
+            app.exit()
     
     def center_mouse(self):
         new_time = datetime.datetime.now()
         if new_time - self.center_mouse_time < datetime.timedelta(milliseconds=20):
-            QCursor.setPos(self.view.mapToGlobal(QPoint(self.width//2,self.width//2)))
+            QCursor.setPos(self.view.mapToGlobal(QPoint(self.mainwidth//2,self.mainwidth//2)))
         self.center_mouse_time = new_time
-        sm.set_center((self.width//2,self.width//2))
+        sm.set_center((self.mainwidth//2,self.mainwidth//2))
 
     def eventFilter(self, source, event):
-        self.center_mouse()
         if event.type() == QEvent.MouseMove:
             sm.change_pos((event.pos().x(), event.pos().y()))
             return True
