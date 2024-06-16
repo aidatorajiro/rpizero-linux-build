@@ -1,4 +1,4 @@
-MYHOSTNAME=myraspberrypizero
+MYHOSTNAME=myraspberrypizero.local
 MYUSERNAME=myusername
 MY_KERNEL_SUFFIX=wakeup
 MY_KERNEL_NAME=kernel-$MY_KERNEL_SUFFIX
