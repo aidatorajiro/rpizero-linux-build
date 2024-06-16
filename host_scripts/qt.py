@@ -131,7 +131,7 @@ class MainWindow(QMainWindow):
 
         self.grabEnabled = True
         self.grabEnabled_cnt = 0
-        self.mainwidth = 150
+        self.mainwidth = 500
 
         self.frametimer = QTimer(self)
         self.frametimer.setInterval(10)
@@ -151,6 +151,8 @@ class MainWindow(QMainWindow):
         self.center_mouse_time = datetime.datetime.now()
         self.focus_out_reset_done = False
 
+        self.setWindowOpacity(0.2)
+
     def frame_process(self):
         if self.isActiveWindow():
             self.focus_out_reset_done = False
@@ -169,6 +171,9 @@ class MainWindow(QMainWindow):
         
         if self.grabEnabled == True:
             self.center_mouse()
+            self.setCursor(Qt.CursorShape.BlankCursor)
+        else:
+            self.setCursor(Qt.CursorShape.ArrowCursor)
 
         if sm.pressed_keys == {Key.Key_R, Key.Key_Alt}:
             reset_payload()
