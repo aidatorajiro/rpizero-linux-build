@@ -626,6 +626,7 @@ keymap = {
     K.Key_Shift : 0xE1, # Shift modifier left of the spacebar
     K.Key_Alt : 0xE2, # Alt modifier left of the spacebar
     K.Key_Super_L : 0xE3, # GUI modifier left of the spacebar
+    K.Key_Meta : 0xE3, 
 #    GUI : LEFT_GUI, # Alias for LEFT_GUI; GUI is also known as the Windows key, Command (Mac), or Meta
 #    RIGHT_CONTROL : 0xE4, # Control modifier right of the spacebar
 #    RIGHT_SHIFT : 0xE5, # Shift modifier right of the spacebar
@@ -644,11 +645,12 @@ def create_key_report(list_of_keys, n=6):
     rep = [0] * n
     i = 0
     for k in list_of_keys:
-        k = keymap[k]
-        m = modifier_bit(k)
-        if m is not None:
-            mod |= m
-        else:
-            rep[i] = k
-            i += 1
+        if k in keymap:
+            k = keymap[k]
+            m = modifier_bit(k)
+            if m is not None:
+                mod |= m
+            else:
+                rep[i] = k
+                i += 1
     return struct.pack('<' + 'B' * (2 + n), mod, 0, *rep)
