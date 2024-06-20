@@ -24,16 +24,16 @@ with open('/dev/hidg0', 'wb') as hidg0:
         async def main():
             reader, writer_debug, writer_hidg0, writer_hidg1 = await connect_stdin_stdout()
             while True:
-                res = await reader.read(1)
+                res = await reader.readexactly(1)
                 if not res:
                     break
                 if res == b'\x01':
-                    res = await reader.read(7)
+                    res = await reader.readexactly(7)
                     if not res:
                         break
                     writer_hidg1.write(res)
                 if res == b'\x02':
-                    res = await reader.read(8)
+                    res = await reader.readexactly(8)
                     if not res:
                         break
                     writer_hidg0.write(res)
