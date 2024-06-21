@@ -32,11 +32,13 @@ with open('/dev/hidg0', 'wb') as hidg0:
                     if not res:
                         break
                     writer_hidg1.write(res)
-                if res == b'\x02':
+                elif res == b'\x02':
                     res = await reader.readexactly(8)
                     if not res:
                         break
                     writer_hidg0.write(res)
+                else:
+                    raise ValueError('Invalid value')
 
         if __name__ == "__main__":
             asyncio.run(main())
