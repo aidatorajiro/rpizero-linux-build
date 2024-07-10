@@ -9,6 +9,9 @@ from PyQt5.QtGui import QMouseEvent, QCursor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsView, QGraphicsScene
 from keymap import inv_qtkeys, unshift_table, create_key_report
 
+COEFF_MOVE = 1.0
+WINDOW_SIZE = 500
+
 Key = Qt.Key
 
 from config import HOST_AND_USER
@@ -26,6 +29,10 @@ def handler_exit():
 
 atexit.register(handler_exit)
 
+type MouseCallbackArgs = tuple[tuple[int, int], tuple[int, int], set[int], int]
+type KeyCallback = Callable[[set[int]], None] | None 
+type MouseCallback = Callable[[MouseCallbackArgs], None] | None
+
 class StateManager():
     def __init__(self):
         self.pressed_keys: set[int] = set()
@@ -34,9 +41,10 @@ class StateManager():
         # self.current_pos_old = None
         self.center: tuple[int, int] | None = None
 
-        self.key_callback: Callable[[set[int]], None] | None = None
-        self.pos_callback: Callable[[tuple[tuple[int, int], tuple[int, int], set[int]]], None] | None = None
-        self.button_callback = None
+        self.key_callback: KeyCallback = None
+        self.pos_callback: MouseCallback = None
+        self.button_callback: MouseCallback = None
+        self.wheel_callback: MouseCallback = None
     
     def reset_states(self):
         print('reset states...')
@@ -44,16 +52,16 @@ class StateManager():
         self.pressed_keys = set()
         self.center = None
     
-    def set_center(self, p):
+    def set_center(self, p: tuple[int, int] | None):
         self.center = p
     
     def change_pos(self, p: tuple[int, int]):
         if self.center != p and self.center is not None:
             # self.current_pos = p
             if self.pos_callback is not None:
-                self.pos_callback((self.center, p, self.pressed_buttons))
+                self.pos_callback((self.center, p, self.pressed_buttons, 0))
 
-    def add_key(self, k):
+    def add_key(self, k: int):
         if k in unshift_table:
             k = unshift_table[k]
         if not k in self.pressed_keys:
@@ -61,7 +69,7 @@ class StateManager():
             if self.key_callback is not None:
                 self.key_callback(self.pressed_keys)
     
-    def remove_key(self, k):
+    def remove_key(self, k: int):
         if k in unshift_table:
             k = unshift_table[k]
         if k in self.pressed_keys:
@@ -69,26 +77,33 @@ class StateManager():
             if self.key_callback is not None:
                 self.key_callback(self.pressed_keys)
 
-    def add_button(self, b):
+    def add_button(self, b: int):
         if not b in self.pressed_buttons and self.center is not None:
             self.pressed_buttons.add(b)
             if self.button_callback is not None:
-                self.button_callback((self.center, self.center, self.pressed_buttons))
+                self.button_callback((self.center, self.center, self.pressed_buttons, 0))
     
-    def remove_button(self, b):
+    def remove_button(self, b: int):
         if b in self.pressed_buttons and self.center is not None:
             self.pressed_buttons.remove(b)
             if self.button_callback is not None:
-                self.button_callback((self.center, self.center, self.pressed_buttons))
+                self.button_callback((self.center, self.center, self.pressed_buttons, 0))
+    
+    def do_wheel(self, val: int):
+        if self.wheel_callback is not None and self.center is not None:
+            self.wheel_callback((self.center, self.center, self.pressed_buttons, val))
 
-    def set_pos_callback(self, cb):
+    def set_pos_callback(self, cb: MouseCallback):
         self.pos_callback = cb
 
-    def set_key_callback(self, cb):
+    def set_key_callback(self, cb: KeyCallback):
         self.key_callback = cb
 
-    def set_button_callback(self, cb):
+    def set_button_callback(self, cb: MouseCallback):
         self.button_callback = cb
+
+    def set_wheel_callback(self, cb: MouseCallback):
+        self.wheel_callback = cb
 
 sm = StateManager()
 
@@ -101,17 +116,17 @@ def reset_payload():
     send_payload(b'\x01' + b'\0' * 7)
     send_payload(b'\x02' + b'\0' * 8)
 
-def mouse_func(x):
-    (oldpos, newpos, btns) = x
+def mouse_func(x: MouseCallbackArgs):
+    (oldpos, newpos, btns, wheel) = x
 
     if oldpos != None and newpos != None:
         dx, dy = newpos[0] - oldpos[0], newpos[1] - oldpos[1]
         intersection = btns & {1, 2, 4} # 1: left, 2: right, 4:middle
-        payload = struct.pack('<BhhBB', sum(intersection), dx, dy, 0, 0)
+        payload = struct.pack('<Bhhh', sum(intersection), dx, dy, wheel)
         print('pos+btn', payload)
         send_payload(b'\x01' + payload)
 
-def key_func(keys):
+def key_func(keys: set[int]):
     print(keys)
     payload = create_key_report(list(keys))
     # print([inv_qtkeys[k] for k in list(keys)])
@@ -124,6 +139,8 @@ sm.set_key_callback(key_func)
 
 sm.set_button_callback(mouse_func)
 
+sm.set_wheel_callback(mouse_func)
+
 # Subclass QMainWindow to customize your application's main window
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -131,7 +148,7 @@ class MainWindow(QMainWindow):
 
         self.grabEnabled = True
         self.grabEnabled_cnt = 0
-        self.mainwidth = 500
+        self.mainwidth = WINDOW_SIZE
 
         self.frametimer = QTimer(self)
         self.frametimer.setInterval(10)
@@ -191,7 +208,7 @@ class MainWindow(QMainWindow):
 
     def eventFilter(self, source, event): # type: ignore
         if event.type() == QEvent.MouseMove: # type: ignore
-            sm.change_pos((event.pos().x(), event.pos().y()))
+            sm.change_pos((int(event.pos().x() * COEFF_MOVE), int(event.pos().y() * COEFF_MOVE)))
             return True
         elif event.type() == QEvent.KeyPress and not event.isAutoRepeat(): # type: ignore
             sm.add_key(event.key())
@@ -204,6 +221,10 @@ class MainWindow(QMainWindow):
             return True
         elif event.type() == QEvent.MouseButtonRelease: # type: ignore
             sm.remove_button(event.button())
+            return True
+        elif event.type() == QEvent.Wheel: # type: ignore
+            print(event.angleDelta())
+            sm.do_wheel(int(event.pixelDelta().y() // 120))
             return True
         return QMainWindow.eventFilter(self, source, event)
 
