@@ -50,4 +50,5 @@ Patch reference: <https://github.com/pikvm/packages/blob/master/packages/linux-r
 
 - `host_scripts/`: scripts to be run from the remote computer that will control raspberry pi
   - `qt.py`: Use PyQt5 to synchronize keyboard input and mouse movement
+    USAGE: Alt+G to toggle mouse grabbing. After switching mouse grabbing on, just type text or moving mouse. Note that on MacOS, CTRL is interpreted as WINDOWS key, and COMMAND is interpreted as CTRL key.
   - `mouse.py`: Use Xlib to synchronize mouse movement
