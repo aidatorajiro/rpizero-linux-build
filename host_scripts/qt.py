@@ -60,6 +60,22 @@ class StateManager():
             # self.current_pos = p
             if self.pos_callback is not None:
                 self.pos_callback((self.center, p, self.pressed_buttons, 0))
+    
+    def add_key_dry(self, k: int):
+        if k in unshift_table:
+            k = unshift_table[k]
+        c = self.pressed_keys.copy()
+        if not k in c:
+            c.add(k)
+        return c
+
+    def remove_key_dry(self, k: int):
+        if k in unshift_table:
+            k = unshift_table[k]
+        c = self.pressed_keys.copy()
+        if k in c:
+            c.remove(k)
+        return c
 
     def add_key(self, k: int):
         if k in unshift_table:
@@ -146,8 +162,12 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        self.SHORTCUT_GRAB = {Key.Key_G, Key.Key_Alt}
+        self.SHORTCUT_RESET = {Key.Key_R, Key.Key_Alt}
+        self.SHORTCUT_QUIT = {Key.Key_Q, Key.Key_Alt}
+        self.SHORTCUTS = [self.SHORTCUT_GRAB, self.SHORTCUT_RESET, self.SHORTCUT_QUIT]
+
         self.grabEnabled = True
-        self.grabEnabled_cnt = 0
         self.mainwidth = WINDOW_SIZE
 
         self.frametimer = QTimer(self)
@@ -179,24 +199,21 @@ class MainWindow(QMainWindow):
             sm.reset_states()
             self.focus_out_reset_done = True
         
-        if sm.pressed_keys == {Key.Key_G, Key.Key_Alt}:
-            self.grabEnabled_cnt += 1
-            if self.grabEnabled_cnt == 1:
-                self.grabEnabled = not self.grabEnabled
-        else:
-            self.grabEnabled_cnt = 0
-        
         if self.grabEnabled == True:
             self.center_mouse()
             self.setCursor(Qt.CursorShape.BlankCursor)
         else:
             self.setCursor(Qt.CursorShape.ArrowCursor)
-
-        if sm.pressed_keys == {Key.Key_R, Key.Key_Alt}:
+    
+    def handle_shortcuts(self, keys_dry):
+        if keys_dry == self.SHORTCUT_GRAB:
+            self.grabEnabled = not self.grabEnabled
+        
+        if keys_dry == self.SHORTCUT_RESET:
             reset_payload()
             sm.reset_states()
 
-        if sm.pressed_keys == {Key.Key_Q, Key.Key_Alt}:
+        if keys_dry == self.SHORTCUT_QUIT:
             app.exit()
     
     def center_mouse(self):
@@ -211,10 +228,18 @@ class MainWindow(QMainWindow):
             sm.change_pos((int(event.pos().x() * COEFF_MOVE), int(event.pos().y() * COEFF_MOVE)))
             return True
         elif event.type() == QEvent.KeyPress and not event.isAutoRepeat(): # type: ignore
-            sm.add_key(event.key())
+            keys_dry = sm.add_key_dry(event.key())
+            if not keys_dry in self.SHORTCUTS:
+                sm.add_key(event.key())
+            else:
+                self.handle_shortcuts(keys_dry)
             return True
         elif event.type() == QEvent.KeyRelease and not event.isAutoRepeat(): # type: ignore
-            sm.remove_key(event.key())
+            keys_dry = sm.remove_key_dry(event.key())
+            if not keys_dry in self.SHORTCUTS:
+                sm.remove_key(event.key())
+            else:
+                self.handle_shortcuts(keys_dry)
             return True
         elif event.type() == QEvent.MouseButtonPress: # type: ignore
             sm.add_button(event.button())
