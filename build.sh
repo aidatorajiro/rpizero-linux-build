@@ -2,11 +2,9 @@
 
 apt update && apt upgrade -y
 
-export ARCH=arm
-export CROSS_COMPILE=arm-linux-gnueabihf-
-DEFCONFIG=bcmrpi_defconfig
+. ./build.config.sh
+
 DTS_SUBDIR=broadcom
-IMAGE=zImage
 
 mkdir build
 cd linux

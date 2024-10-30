@@ -6,7 +6,9 @@ Also, the directory `raspi_scripts` contains utilities to setup HID keyboard, RN
 
 Patch reference: <https://github.com/pikvm/packages/blob/master/packages/linux-rpi-pikvm/1003-remote-wakeup.patch> <https://github.com/raspberrypi/linux/issues/3977> <http://www.dt8.jp/cgi-bin/adiary/adiary.cgi/0583>
 
+1. Move to the project directory.
 1. (if you are using selinux, run this script to allow write access from docker) `sudo sh selinux.sh`
+1. `ln -s build.config.32_2709.sh build.config.sh` (change `build.config.32_2709.sh` according to the CPU and architecture. See <https://www.raspberrypi.com/documentation/computers/linux_kernel.html#cross-compiled-build-configuration> for instructions.)
 1. `sh download.sh`
 1. `sh docker.sh`
 1. (inside docker) `cd /rpizero-linux-build`
@@ -29,7 +31,6 @@ Patch reference: <https://github.com/pikvm/packages/blob/master/packages/linux-r
    kernel=kernel-wakeup.img
    ```
 1. ssh into the rpizero and reboot
-
 
 ## scripts and configs for rpi zero
 
