@@ -1,0 +1,2 @@
+0 0 * * * /home/oraora/reboot-script.sh
+*/10 * * * * /home/oraora/wifi-check.sh

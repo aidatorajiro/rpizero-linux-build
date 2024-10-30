@@ -1,3 +1,5 @@
+#/bin/bash
+
 . ./names.sh
 
 MY_KERNEL_VERSION=$(cat build/include/config/kernel.release)

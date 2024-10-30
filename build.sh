@@ -1,3 +1,5 @@
+#!/bin/bash
+
 . ./names.sh
 
 apt update && apt upgrade -y
