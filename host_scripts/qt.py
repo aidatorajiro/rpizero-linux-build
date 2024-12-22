@@ -5,9 +5,9 @@ import datetime
 from typing import Callable
 
 from PyQt5.QtCore import QSize, QTimer, Qt, QEvent, QPoint
-from PyQt5.QtGui import QMouseEvent, QCursor
+from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsView, QGraphicsScene
-from keymap import inv_qtkeys, unshift_table, create_key_report
+from keymap import unshift_table, create_key_report
 
 COEFF_MOVE = 1.0
 WINDOW_SIZE = 500
@@ -157,6 +157,12 @@ sm.set_button_callback(mouse_func)
 
 sm.set_wheel_callback(mouse_func)
 
+def specialRound(num: float):
+    if num >= 0:
+        return int(num) + 1
+    else:
+        return int(num) - 1
+
 # Subclass QMainWindow to customize your application's main window
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -248,8 +254,9 @@ class MainWindow(QMainWindow):
             sm.remove_button(event.button())
             return True
         elif event.type() == QEvent.Wheel: # type: ignore
-            print(event.angleDelta())
-            sm.do_wheel(int(event.pixelDelta().y() // 120))
+            print("angleDelta", event.angleDelta())
+            print("pixelDelta", event.pixelDelta())
+            sm.do_wheel(specialRound(event.pixelDelta().y() / 120))
             return True
         return QMainWindow.eventFilter(self, source, event)
 
