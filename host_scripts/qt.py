@@ -196,13 +196,19 @@ class MainWindow(QMainWindow):
 
         self.setWindowOpacity(0.2)
 
+    def enableGrab(self):
+        self.grabEnabled = True
+
+    def disableGrab(self):
+        self.grabEnabled = False
+        reset_payload()
+        sm.reset_states()
+
     def frame_process(self):
         if self.isActiveWindow():
             self.focus_out_reset_done = False
         elif self.focus_out_reset_done == False:
-            self.grabEnabled = False
-            reset_payload()
-            sm.reset_states()
+            self.disableGrab()
             self.focus_out_reset_done = True
         
         if self.grabEnabled == True:
@@ -213,7 +219,10 @@ class MainWindow(QMainWindow):
     
     def handle_shortcuts(self, keys_dry):
         if keys_dry == self.SHORTCUT_GRAB:
-            self.grabEnabled = not self.grabEnabled
+            if self.grabEnabled:
+                self.disableGrab()
+            else:
+                self.enableGrab()
         
         if keys_dry == self.SHORTCUT_RESET:
             reset_payload()
