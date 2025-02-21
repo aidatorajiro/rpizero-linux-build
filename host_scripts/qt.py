@@ -265,7 +265,8 @@ class MainWindow(QMainWindow):
         elif event.type() == QEvent.Wheel: # type: ignore
             print("angleDelta", event.angleDelta())
             print("pixelDelta", event.pixelDelta())
-            sm.do_wheel(specialRound(event.pixelDelta().y() / 120))
+            if event.pixelDelta().y() != 0:
+                sm.do_wheel(specialRound(event.pixelDelta().y() / 120))
             return True
         return QMainWindow.eventFilter(self, source, event)
 
