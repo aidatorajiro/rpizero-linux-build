@@ -1,5 +1,7 @@
 #/bin/bash
 
+set -e
+
 . ./names.sh
 
 MY_KERNEL_VERSION=$(cat build/include/config/kernel.release)
@@ -18,3 +20,6 @@ ssh $MYUSERNAME@$MYHOSTNAME "sudo cp initramfs /boot/firmware/initramfs-$MY_KERN
 
 echo "Cleaning up..."
 ssh $MYUSERNAME@$MYHOSTNAME "rm initramfs install.tar.xz kernel-config"
+
+echo "Rebooting..."
+ssh $MYUSERNAME@$MYHOSTNAME "sudo reboot"
